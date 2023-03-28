@@ -1,40 +1,59 @@
-module main
-
-import os
-import net.http
-import json
+use std::process;
+use std::env;
 
 fn main() {
-	if os.args.len < 2 {
-		println('Usage: lipac <operation> <package>')
-		exit(1)
-	}
-	if os.args[1][1] != 'S' {
-		os.execvp("pacman", if os.args[1] == '-Yc' {['-Rns", "$(pacman -Qqtd)']} else {os.args[1..]})
-	}
-	
+    if env::args().len() < 2 {
+        eprintln!("Incorrect arguments: lipac <operation> <package>");
+        process::exit(1);
+    }
+    let args: Vec<String> = env::args().skip(1).collect();
 
+    // insert pacman handling here
+    if args[1].chars().nth(1).unwrap() != 'S' {
+        let err = exec::execvp("pacman", &args);
+        println!("Error: {}", err);
+        process::exit(2);
+    }
+    
+    let (standard_repo_packages, other_packages) = pacman_check(args);
+    println!("{:?}", standard_repo_packages);
+
+    let (aur_packages, invalid_packages) = aur_check(other_packages);
+
+    println!("AUR Packages: {:?}", aur_packages);
+    println!("Invalid Packages: {:?}", invalid_packages);
 }
 
-fn get_aur_packages(pkglist []string) {
-	rpc_url := "https://aur.archlinux.org/rpc/?v=5&type=info"
-	for package in pkglist {
-		rpc_url += "&arg[]=" + package
-	}
-	// rpc_json :=  
+fn pacman_check(pkg_list: Vec<String>) -> (Vec<String>, Vec<String>){
+    // check if packages are in the standard repo
+    // return a vector of packages that are in the standard repo and invalid packages
 
-	// impliment if result count = pkglist.len just return pkglist
-	valid_packages := 
-	invalid_packages :=
-	return valid_packages, invalid_packages
+    println!("{:?}", pkg_list);
+
+    return (Vec::new(), Vec::new());
 }
 
-// TO-DO
+fn aur_check(pkg_list: Vec<String>) -> (Vec<String>, Vec<String>){
+    let mut rpc_url = "https://aur.archlinux.org/rpc/?v=5&type=info".to_owned();
 
-// Use pacman -D to install packages as dependencies when needed
+	for package in pkg_list {
+		rpc_url.push_str("&arg[]=");
+        rpc_url.push_str(&package);
+	}
 
-// Pacman -S --help:
-/* usage:  pacman {-S --sync} [options] [package(s)]
+    let resp = reqwest::get(&rpc_url);
+
+    
+    // get rpc_url and parse it
+
+
+
+    // return a vector of packages that are in the AUR and invalid packages
+
+    return (Vec::new(), Vec::new());
+}  
+
+/* /* usage:  pacman {-S --sync} [options] [package(s)]
 options:
   -b, --dbpath <path>  set an alternate database location
   -c, --clean          remove old packages from cache directory (-cc for all)
@@ -79,4 +98,4 @@ options:
                        overwrite conflicting files (can be used more than once)
       --print-format <string>
                        specify how the targets should be printed
-      --sysroot        operate on a mounted guest system (root-only)*/
+      --sysroot        operate on a mounted guest system (root-only)*/ */
